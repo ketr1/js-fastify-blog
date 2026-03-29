@@ -1,45 +1,21 @@
 # JS Fastify Blog
 
-[![Main](https://github.com/hexlet-components/js-fastify-blog/actions/workflows/main.yml/badge.svg)](https://github.com/hexlet-components/js-fastify-blog/actions/workflows/main.yml)
+[![Main](https://github.com/ketr1/js-fastify-blog/actions/workflows/main.yml/badge.svg)](https://github.com/ketr1/js-fastify-blog/actions/workflows/main.yml)
 
-## Requirement
+## Requirements
 
-* NodeJS v20.6.1
-* Sqlite или PostgreSQL
+- Docker
+- Docker Compose
 
-## Commands
+## Environment
 
-```bash
-make install
-make dev
-```
-
-## Run tests with Postgres
-
-To run tests with Postgres, you need to edit *config/config.cjs* and under the `test` key comment out the use of SQLite and uncomment the environment variables
-
-```js
-  // test: {
-  //   dialect: 'sqlite',
-  //   storage: './database.test.sqlite',
-  // },
-  test: {
-    dialect: 'postgres',
-    database: process.env.DATABASE_NAME,
-    username: process.env.DATABASE_USERNAME,
-    password: process.env.DATABASE_PASSWORD,
-    port: process.env.DATABASE_PORT,
-    host: process.env.DATABASE_HOST,
-  },
-```
-
-Specify environment variables manually or prepare a *.env* file with the command
+Create a local `.env` file before the first start:
 
 ```bash
-make prepare-env
+cp .env.example .env
 ```
 
-In it specify the data to connect to the database
+Default values are already prepared for local Docker Compose:
 
 ```dotenv
 DATABASE_NAME=postgres
@@ -49,21 +25,61 @@ DATABASE_PORT=5432
 DATABASE_HOST=localhost
 ```
 
-## Running an application with Postgres (production)
+`docker-compose.yml` overrides `DATABASE_HOST` to `db` inside containers, so the same `.env` file works both locally and in Docker.
 
-Export environment variables to work with the database or prepare a *.env* file with variables
+## Local development with Docker Compose
 
-Run
+Start the app and PostgreSQL:
 
 ```bash
-make build # build assets
-make start # Open in browser: http://localhost:8080
+docker compose up --build app db
 ```
 
----
+The application will be available at `http://localhost:8080`.
 
-[![Hexlet Ltd. logo](https://raw.githubusercontent.com/Hexlet/assets/master/images/hexlet_logo128.png)](https://hexlet.io?utm_source=github&utm_medium=link&utm_campaign=js-fastify-blog)
+## Checks in Docker
 
-This repository is created and maintained by the team and the community of Hexlet, an educational project. [Read more about Hexlet](https://hexlet.io?utm_source=github&utm_medium=link&utm_campaign=js-fastify-blog).
+Run lint:
 
-See most active contributors on [hexlet-friends](https://friends.hexlet.io/).
+```bash
+docker compose --profile ci run --rm lint
+```
+
+Run tests:
+
+```bash
+docker compose --profile ci run --rm test
+```
+
+After the checks finish, stop and clean up the services if needed:
+
+```bash
+docker compose down --volumes --remove-orphans
+```
+
+## Production image
+
+Build the image:
+
+```bash
+docker build --target production -t <dockerhub-user>/js-fastify-blog:latest .
+```
+
+Run the container against PostgreSQL:
+
+```bash
+docker run --rm -p 8080:8080 --env-file .env -e DATABASE_HOST=host.docker.internal <dockerhub-user>/js-fastify-blog:latest
+```
+
+For container-to-container networking, pass `DATABASE_HOST` explicitly, for example `-e DATABASE_HOST=db`.
+
+## GitHub Actions and Docker Hub
+
+CI and image publishing are configured in [.github/workflows/main.yml](/c:/Users/kettr/.vscode/js-fastify-blog/.github/workflows/main.yml).
+
+To publish the image to Docker Hub from GitHub Actions, configure these repository secrets:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+The workflow publishes the image as `<repository_owner>/<repository_name>` by default on pushes to `main`.

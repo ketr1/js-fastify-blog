@@ -16,19 +16,19 @@ start:
 	NODE_ENV=production npm run start
 
 dev:
-	npx concurrently "make start-frontend" "make start-backend"
+	npm run dev
 
 start-backend:
-	npm start -- --watch --verbose-watch --ignore-watch='node_modules .git .sqlite'
+	npm run dev:server
 
 start-frontend:
-	npx webpack --watch --progress
+	npm run dev:assets
 
 lint:
-	npx eslint .
+	npm run lint
 
 lint-fix:
-	npx eslint --fix .
+	npm run lint:fix
 
 test:
 	NODE_ENV=test npm test -s
